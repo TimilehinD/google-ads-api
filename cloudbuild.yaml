@@ -1,0 +1,45 @@
+steps:
+# Fetch secrets from Secret Manager
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'secrets'
+  - 'versions'
+  - 'access'
+  - 'latest'
+  - '--secret'
+  - 'your-secret-name'
+  - '--format'
+  - 'value(payload.data.my_api_secret)'  # Replace with the actual key
+  env:
+  - 'my_api_secret=${_RESULT}'
+
+# Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'europe-west3-docker.pkg.dev/$PROJECT_ID/stadly-docker', '.']
+
+# Push the container image to Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'europe-west3-docker.pkg.dev/$PROJECT_ID/stadly-docker']
+
+# Deploy container image to Cloud Run
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'run'
+  - 'deploy'
+  - 'Stadly-Google-ads-api'
+  - '--image'
+  - 'europe-west3-docker.pkg.dev/$PROJECT_ID/stadly-docker'
+  - '--region'
+  - 'europe-west3'
+  - '--platform'
+  - 'managed'
+  - '--min-instances'
+  - '0'
+  - '--max-instances'
+  - '1'
+  - '--service-account'
+  - 'stadlyapi-269@glancehair-1691487293868.iam.gserviceaccount.com'
+  - '--set-env-vars'
+  - 'my_api_secret=${_RESULT}'  # Use the retrieved secret in your application
+images:
+- 'europe-west3-docker.pkg.dev/$PROJECT_ID/stadly-docker'

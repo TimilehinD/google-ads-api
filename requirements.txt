@@ -1,0 +1,6 @@
+google-ads
+google-cloud-bigquery
+requests
+google-cloud-secret-manager
+google-api-core
+google-auth
